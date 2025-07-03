@@ -1,102 +1,167 @@
-# Payment System Microservice
+# 🏦 Payment System Microservice
 
-A robust, production-ready Node.js + TypeScript payment microservice with Express, InversifyJS, Redis, and observability best practices.
+A **production-grade, modular, and fault-tolerant** Node.js microservice that simulates payment processing with:
 
----
-
-## Features
-- **Clean architecture:** Modular, scalable folder structure
-- **Dependency Injection:** InversifyJS for testability and flexibility
-- **Logging:** Pino logger, configurable log level
-- **Redis-backed state:** Circuit breaker, logs, metrics, all persisted with TTL
-- **Flaky Payment Provider:** Simulates real-world failures
-- **Circuit Breaker:** Redis-backed, configurable, production-grade
-- **Retry Logic:** Exponential backoff, configurable
-- **Swagger API Docs:** `/api-docs` endpoint
-- **Metrics & Summary:** `/api/metrics`, `/api/status/summary`
-- **Centralized error handling**
-- **Environment-driven config**
+✅ Circuit Breaker (Redis-backed)
+✅ Retry Logic with Exponential Backoff
+✅ Flaky Payment Provider (for failure simulation)
+✅ Natural Language Failure Summary (Mock LLM)
+✅ Clean, testable architecture with InversifyJS & TypeScript
+✅ API Documentation with Swagger
+✅ Dockerized setup for easy deployment
 
 ---
 
-## Getting Started
+## 📦 Tech Stack
+
+- **Node.js** + **TypeScript**
+- **Express.js** (REST API)
+- **InversifyJS** (Dependency Injection)
+- **Redis** (State management, Circuit Breaker, logs)
+- **Pino** (Structured logging)
+- **Swagger** (API documentation)
+- **Docker & Docker Compose**
+
+---
+
+## 🚀 Setup Instructions
 
 ### Prerequisites
-- Docker & Docker Compose
 
-### Quick Start (Docker Compose)
+- Docker & Docker Compose installed
+- Alternatively, Node.js 20+ and Redis installed locally
 
-1. **Clone the repo:**
-   ```sh
-git clone <your-repo-url>
+### Quick Start (Recommended via Docker)
+
+```bash
+git clone
 cd payment-system
-```
-2. **Copy or edit the environment file:**
-   ```sh
-cp .env.example .env
-# or edit .env as needed
-```
-3. **Start the stack:**
-   ```sh
+cp .env.example .env   # Edit as needed
 docker-compose up --build
 ```
-4. **Access the API:**
-   - Swagger UI: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
-   - Health: [http://localhost:3000/api/status](http://localhost:3000/api/status)
-   - Metrics: [http://localhost:3000/api/metrics](http://localhost:3000/api/metrics)
-   - Summary: [http://localhost:3000/api/status/summary](http://localhost:3000/api/status/summary)
+
+**Access the API:**
+
+| Endpoint                                   | Description                      |
+| ------------------------------------------ | -------------------------------- |
+| `http://localhost:3000/api-docs`           | Interactive Swagger UI           |
+| `http://localhost:3000/api/payment`        | Simulate payment processing      |
+| `http://localhost:3000/api/status`         | View Circuit Breaker status      |
+| `http://localhost:3000/api/status/summary` | Natural-language failure summary |
+| `http://localhost:3000/api/metrics`        | Basic metrics overview           |
 
 ---
 
-## Environment Variables
+## ⚡️ Fraud Logic & Circuit Breaker
 
-| Variable | Default | Description |
-|---|---|---|
-| PORT | 3000 | App port |
-| LOG_LEVEL | info | Pino log level |
-| FLAKY_PAYMENT_FAILURE_RATE | 0.3 | Failure rate for mock provider (0-1) |
-| REDIS_HOST | redis | Redis host |
-| REDIS_PORT | 6379 | Redis port |
-| REDIS_PASSWORD |  | Redis password |
-| REDIS_DB | 0 | Redis DB index |
-| PAYMENT_MAX_RETRIES | 3 | Max payment retries |
-| PAYMENT_BACKOFF_MS | 500,1000,2000 | Retry backoff (comma-separated ms) |
-| PAYMENT_LOG_TTL | 600 | Log TTL (seconds) |
-| PAYMENT_LOG_MAX_LENGTH | 1000 | Max log entries |
-| SUMMARY_WINDOW_MS | 600000 | Summary window (ms) |
-| CIRCUIT_BREAKER_FAILURE_THRESHOLD | 5 | Circuit breaker failure threshold |
-| CIRCUIT_BREAKER_COOLDOWN_MS | 30000 | Circuit breaker cooldown (ms) |
-| CIRCUIT_BREAKER_KEY | circuit:payment | Redis key for circuit breaker |
+- Simulates **intermittent payment failures** via a configurable failure rate.
+- On multiple consecutive failures (configurable threshold), a **Redis-backed Circuit Breaker** opens to block further attempts.
+- After a cooldown period, it transitions to HALF_OPEN state to test recovery.
+- All payment attempts (success/failure) are logged in Redis with TTL for observability.
 
 ---
 
-## API Documentation
+## 💡 LLM Usage (Mocked)
 
-See [Swagger UI](http://localhost:3000/api-docs) for full docs.
+- After multiple failures or via `/status/summary`, the service generates a **natural language summary** of failure rates and circuit state.
+- For this exercise, the summary is generated via a simple mock function.
+- The architecture is designed to easily swap the mock with a real LLM API (e.g., OpenAI, Azure OpenAI) in future.
 
-### Main Endpoints
-- `POST /api/payment` — Process a payment
-- `GET /api/status` — Circuit breaker status
-- `GET /api/status/summary` — Natural-language summary
-- `GET /api/metrics` — Metrics and recent stats
+**Example Summary Output:**
 
----
-
-## Tradeoffs & Notes
-- **Redis TTL:** All logs and state use a 10-minute TTL for rolling windows. Data is lost if Redis is flushed or TTL expires.
-- **Flaky Provider:** Simulates real-world unreliability for testing circuit breaker and retry logic.
-- **No persistent DB:** Only Redis is used for state/logs; no SQL/NoSQL DB.
-- **Config via env:** All behavior is environment-driven for flexibility.
-- **Production readiness:** Modular, observable, and ready for extension.
+```json
+{
+  "summary": "In the last 10 minutes, 70% of payment attempts failed. The circuit breaker is currently open, blocking new attempts."
+}
+```
 
 ---
 
-## Development
+## ⚙️ Environment Variables
 
-- `npm install`
-- `npm run dev`
+All configuration is environment-driven. See `.env.example` for defaults.
+
+| Variable                            | Description                                       |
+| ----------------------------------- | ------------------------------------------------- |
+| `PORT`                              | App port (default: `3000`)                        |
+| `LOG_LEVEL`                         | Pino log level (`info`, `debug`, etc.)            |
+| `FLAKY_PAYMENT_FAILURE_RATE`        | Failure rate for simulated provider (`0.3` = 30%) |
+| `REDIS_HOST`                        | Redis hostname (default: `redis` in Docker)       |
+| `REDIS_PORT`                        | Redis port (default: `6379`)                      |
+| `REDIS_PASSWORD`                    | Optional Redis password                           |
+| `PAYMENT_MAX_RETRIES`               | Max payment retries before failure                |
+| `PAYMENT_BACKOFF_MS`                | Retry delays, comma-separated (ms)                |
+| `CIRCUIT_BREAKER_FAILURE_THRESHOLD` | Failures before circuit opens                     |
+| `CIRCUIT_BREAKER_COOLDOWN_MS`       | Cooldown before HALF_OPEN state                   |
 
 ---
 
-## License
-MIT 
+## 🛠️ Development (Without Docker)
+
+Ensure Redis is running locally, then:
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## 📝 Assumptions & Trade-offs
+
+- No persistent DB — Redis holds transient state only.
+- Flaky Provider simulates failures to test Circuit Breaker.
+- LLM Summary is mocked for now; real integration is trivial.
+- TTL-based logs and state — system forgets history after expiry.
+- Production-level observability (Pino logs, metrics, status endpoints) included.
+
+---
+
+## 🤖 AI & Cursor Usage
+
+I used **Cursor AI** throughout development to:
+
+- Scaffold clean service and DI structure
+- Quickly draft Redis-backed Circuit Breaker logic
+- Prototype the LLM Summary logic with future real-LLM integration in mind
+- Refine error handling and logging best practices
+- Generate this README structure for clarity
+
+I iteratively modified AI-generated code to align with clean architecture and real-world standards.
+
+---
+
+## 📂 Project Structure (Key Parts)
+
+```
+src/
+├── configs/        # DI container, Redis, Logger config
+├── services/       # PaymentService, CircuitBreakerService, SummaryService
+├── interfaces/     # Interfaces for services/providers
+├── providers/      # Flaky Payment Provider, Redis setup
+├── routers/        # Express routes
+├── handlers/       # Global error handling, ApiError
+└── index.ts        # App entrypoint
+```
+
+---
+
+## 📦 Production Readiness
+
+✅ Modular and easily extendable
+✅ Dockerized for isolated, portable deployment
+✅ Clear separation of concerns with DI
+✅ Real-world failure handling patterns (retry, circuit breaker)
+✅ Natural language summary via future LLM integration
+
+---
+
+## 📜 License
+
+MIT
+
+---
+
+## ✅ Final Notes
+
+Clone, configure `.env`, run via Docker, and you're good to go.
