@@ -36,7 +36,7 @@ A **production-grade, modular, and fault-tolerant** Node.js microservice that si
 ```bash
 git clone
 cd payment-system
-cp .env.example .env   # Edit as needed
+cp .env.example .env
 docker-compose up --build
 ```
 
