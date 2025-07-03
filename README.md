@@ -52,7 +52,7 @@ docker-compose up --build
 
 ---
 
-## ⚡️ Fraud Logic & Circuit Breaker
+## ⚡️ Payment Failure & Circuit Breaker
 
 - Simulates **intermittent payment failures** via a configurable failure rate.
 - On multiple consecutive failures (configurable threshold), a **Redis-backed Circuit Breaker** opens to block further attempts.
