@@ -1,0 +1,165 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Payment System API",
+    "version": "1.0.0",
+    "description": "API documentation for the Payment System microservice."
+  },
+  "paths": {
+    "/api/pay": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Process a payment using the flaky provider",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": { "type": "integer", "example": 5000 },
+                  "currency": { "type": "string", "example": "USD" },
+                  "source": { "type": "string", "example": "tok_test" }
+                },
+                "required": ["amount", "currency", "source"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Payment succeeded" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Validation failed" },
+                    "details": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment failed after retries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Payment failed after retries" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status/summary": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Get a natural-language summary of recent payment failures and circuit breaker status",
+        "responses": {
+          "200": {
+            "description": "Summary of recent payment activity and circuit breaker state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": { "type": "string", "example": "In the last 10 minutes, 70% of payment attempts failed due to provider instability. The circuit breaker was triggered and is currently open, blocking new attempts." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Get the current circuit breaker status",
+        "responses": {
+          "200": {
+            "description": "Current circuit breaker state and failure info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "circuitState": { "type": "string", "example": "open" },
+                    "failureCount": { "type": "integer", "example": 7 },
+                    "lastFailure": { "type": "string", "format": "date-time", "example": "2025-05-05T22:12:00Z" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "tags": ["Metrics"],
+        "summary": "Get metrics for retry counts, success/failure rates, and circuit state transitions",
+        "responses": {
+          "200": {
+            "description": "Metrics for recent payment activity and circuit breaker transitions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "retryCounts": {
+                      "type": "object",
+                      "properties": {
+                        "totalRetries": { "type": "integer", "example": 15 },
+                        "avgRetries": { "type": "number", "example": 1.5 }
+                      }
+                    },
+                    "rates": {
+                      "type": "object",
+                      "properties": {
+                        "total": { "type": "integer", "example": 20 },
+                        "successes": { "type": "integer", "example": 12 },
+                        "failures": { "type": "integer", "example": 8 },
+                        "successRate": { "type": "integer", "example": 60 },
+                        "failureRate": { "type": "integer", "example": 40 }
+                      }
+                    },
+                    "circuitTransitions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "type": "string", "example": "open" },
+                          "timestamp": { "type": "string", "format": "date-time", "example": "2025-05-05T22:12:00Z" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 
